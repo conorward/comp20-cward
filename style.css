@@ -1,0 +1,41 @@
+/* This is the style sheet for Lab #5 */
+
+
+/* Import Roboto font */
+@import url(http://fonts.googleapis.com/css?family=Roboto);
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  color: #333;
+}
+
+/* Style for page header */
+#title {
+	text-align: center;
+	font-size: 50pt;
+	padding-top: 50px;
+	color: white;
+	background-image:url(movie_banner.jpg);
+  width:600px;
+  height:115px;
+	display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 
+Center video for stylistic consistency 
+Resize video so that all content fits in browser window
+*/
+#classic_video {
+	display: block;
+    margin: 0 auto;
+    width:  600px;
+  	height: 450px;
+}
+
+/* Center-align annotation for stylistic consistency */
+#movie_quotes {
+	text-align: center;
+}
