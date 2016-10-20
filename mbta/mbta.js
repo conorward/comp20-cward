@@ -8,6 +8,13 @@ Author: Conor Ward
 var map;
 var myLocation = {};
 var infowindow = new google.maps.InfoWindow;
+var my_lat = 0;
+var my_lng = 0;
+closestStop = {};
+closestStop.name = "";
+closestStop.distance = 1;
+closestStop.lat = 0;
+closestStop.lng = 0;
 
 
 /* main function which calls the various other functions in the program */
@@ -26,7 +33,9 @@ function getMyLocation(callback) {
 	if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
 		navigator.geolocation.getCurrentPosition(function(position) {
 			myLocation.lat = position.coords.latitude;
+			my_lat = myLocation.lat;
 			myLocation.lng = position.coords.longitude;
+			my_lng = myLocation.lng;
 			callback();
 		});
 	} else {
@@ -38,7 +47,7 @@ function getMyLocation(callback) {
 /* creates the map as well as a marker with an info window at my location */
 function createMap() {
 	var myOptions = {
-		zoom: 10, // The larger the zoom number, the bigger the zoom
+		zoom: 13, // The larger the zoom number, the bigger the zoom
 		center: me,
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
@@ -47,12 +56,19 @@ function createMap() {
 	var me = new google.maps.LatLng(myLocation.lat, myLocation.lng)
 	map.panTo(me);
 
+	calculateDistance(my_lat,my_lng);
+
+	findClosestLandmark();
+	
 	/* then create marker at my location to mark it */
 	marker = new google.maps.Marker({
 		position: me,
-		title: "Here I Am!"
+		title: "<div id='infowindow'>" + "Closest Red Line Station: " + closestStop.name +
+			"<br />Distance: " + closestStop.distance.toFixed(2) + " miles</div>"
 	});
 	marker.setMap(map);
+
+	closestPolyline();
 
 	/* Finally, open info window on click of marker */
 	google.maps.event.addListener(marker, 'click', function() {
@@ -118,6 +134,22 @@ function drawPolyline() {
 	for (var i = 0; i < stopsAshmont.length - 1; i++) {
 		drawLineBetweenTwoStops(stopsAshmont[i], stopsAshmont[i+1]);
 	}  
+}
+
+/* Draw a polyline between me and the nearest Red Line station */
+function closestPolyline() {
+	var closest_coor = [ 
+		{lat: my_lat, lng: my_lng},
+		{lat: closestStop.lat, lng: closestStop.lng}
+	]
+	var myPath = new google.maps.Polyline({
+			path: closest_coor,
+			geodesic: true,
+			strokeColor: '#0000FF',
+			strokeOpacity: 1.0,
+			strokeWeight: 5
+        });
+		myPath.setMap(map);
 }
 
 // Hard-coded Red Line station names and coordinates
@@ -252,4 +284,44 @@ function returnStationLocation(stationName) {
 	}
 }
 
-			
+
+/* 
+Calculating the Distance Between Two Geopoints via Haversine Formula 
+Thanks to talkol on Stack Overflow for this JavaScript implementation of the Haversine Formula
+*/
+function calculateDistance(lat,lng) {
+
+	Number.prototype.toRad = function() {
+	   return this * Math.PI / 180;
+	}
+
+	stop_lat = Number(lat);
+	stop_lng = Number(lng);
+
+	var R = 6371; // km 
+	var x1 = stop_lat-my_lat;
+	var dLat = x1.toRad();  
+	var x2 = stop_lng-my_lng;
+	var dLon = x2.toRad();  
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+	                Math.cos(my_lat.toRad()) * Math.cos(stop_lat.toRad()) * 
+	                Math.sin(dLon/2) * Math.sin(dLon/2);  
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	var d = R * c; // this is the distance in km
+
+	// Converts km to miles
+	mile_distance = d * 0.621371;
+}	
+
+/* Finds the Red Line station closest to my current location */
+function findClosestLandmark() {
+	for (i = 0; i < stops.length; i++) {
+		calculateDistance(stops[i].lat,stops[i].lng);
+		if (mile_distance < closestStop.distance) {
+			closestStop.distance = mile_distance;
+			closestStop.name = stops[i].name;
+			closestStop.lat = stops[i].lat;
+			closestStop.lng = stops[i].lng;
+		}
+	}
+}	
