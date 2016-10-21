@@ -7,6 +7,8 @@ Author: Conor Ward
 // Global variable declarations
 var map;
 var myLocation = {};
+var stop_distances = {};
+var current_stop = {};
 var infowindow = new google.maps.InfoWindow;
 var my_lat = 0;
 var my_lng = 0;
@@ -58,7 +60,7 @@ function createMap() {
 
 	calculateDistance(my_lat,my_lng);
 
-	findClosestLandmark();
+	findClosestStop();
 	
 	/* then create marker at my location to mark it */
 	marker = new google.maps.Marker({
@@ -86,15 +88,19 @@ function createStationMarkers() {
 
 	function addInfoWindow(marker) {
 		google.maps.event.addListener(marker, 'click', function() {
-			infowindow.setContent(marker.title);
+			current_stop = stops[i];
+			upcomingTrains(current_stop);
 			infowindow.open(map, marker);
 		});
 	}
 
+	
 	for (i = 0; i < stops.length; i++) {
 		var marker = new google.maps.Marker({
 			position: {lat: stops[i].lat, lng: stops[i].lng},
-			title: stops[i].name,
+			// Before adding the JSON data to the infowindow, this is where I was setting the infowindow content
+			// title: "<div id='infowindow'>" + "Station: " + stops[i].name +
+			// 	"<br />Distance: " + stop_distances[i].toFixed(2) + " miles</div>",
 			icon: mbtaImage
 		});
 		marker.setMap(map);
@@ -148,8 +154,8 @@ function closestPolyline() {
 			strokeColor: '#0000FF',
 			strokeOpacity: 1.0,
 			strokeWeight: 5
-        });
-		myPath.setMap(map);
+    });
+	myPath.setMap(map);
 }
 
 // Hard-coded Red Line station names and coordinates
@@ -275,7 +281,7 @@ var stops = [
 	}
 ];
 
-// returnStationLocation("Alewife") => { name: "Alewife",  lat: 42.395428, lng: -71.142483 }
+// returns stop coordinates
 function returnStationLocation(stationName) {
 	for (i = 0; i < stops.length; i++) {
 		if (stops[i].name === stationName) {
@@ -314,9 +320,10 @@ function calculateDistance(lat,lng) {
 }	
 
 /* Finds the Red Line station closest to my current location */
-function findClosestLandmark() {
+function findClosestStop() {
 	for (i = 0; i < stops.length; i++) {
 		calculateDistance(stops[i].lat,stops[i].lng);
+		stop_distances[i] = mile_distance;
 		if (mile_distance < closestStop.distance) {
 			closestStop.distance = mile_distance;
 			closestStop.name = stops[i].name;
@@ -325,3 +332,36 @@ function findClosestLandmark() {
 		}
 	}
 }	
+
+/* Gets the JSON data */
+/* Thanks to MikeySkullivan on Stack Overflow for the help */
+/* http://stackoverflow.com/questions/12460378/how-to-get-json-from-url-in-javascript */
+function upcomingTrains(stop) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("get", "http://rocky-taiga-26352.herokuapp.com/redline.json", true);
+    xhr.responseType = "json";
+    xhr.onload = function() {
+      var status = xhr.status;
+      if (status == 200) {
+        parse_json(xhr.response, stop);
+        console.log(xhr.response)
+      } else {
+      }
+    };
+    xhr.send();
+};
+
+/* Parses JSON and prints upcoming train times to infowindow */
+function parse_json(json_data, stop) {
+		var trips = stop.name;
+		for (i in json_data.TripList.Trips) {
+			for (j in json_data.TripList.Trips[i].Predictions) {
+				if (json_data.TripList.Trips[i].Predictions[j].Stop == stop.name) {
+					trips += "<p> Destination: " + json_data.TripList.Trips[i].Destination + "</p>";
+					trips += "<p> ETA: " + json_data.TripList.Trips[i].Predictions[j].Seconds + " seconds </p>";
+			}
+		}
+		infowindow.setContent(trips);
+	}
+	
+}
