@@ -344,7 +344,6 @@ function upcomingTrains(stop) {
       var status = xhr.status;
       if (status == 200) {
         parse_json(xhr.response, stop);
-        console.log(xhr.response)
       } else {
       }
     };
