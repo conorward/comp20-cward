@@ -338,7 +338,7 @@ function findClosestStop() {
 /* http://stackoverflow.com/questions/12460378/how-to-get-json-from-url-in-javascript */
 function upcomingTrains(stop) {
     var xhr = new XMLHttpRequest();
-    xhr.open("get", "http://rocky-taiga-26352.herokuapp.com/redline.json", true);
+    xhr.open("get", "http://enigmatic-earth-12119.herokuapp.com/redline.json", true);
     xhr.responseType = "json";
     xhr.onload = function() {
       var status = xhr.status;
