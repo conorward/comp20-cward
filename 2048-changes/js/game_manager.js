@@ -186,7 +186,7 @@ GameManager.prototype.move = function (direction) {
             this.over = true; // Game over!
             var username = window.prompt("Please enter your player name!");
             
-            var API_URL = "http://enigmatic-earth-12119.herokuapp.com"; 
+            var API_URL = "https://enigmatic-earth-12119.herokuapp.com"; 
             var URL = API_URL  + "/submit.json";
             $.ajax({
 
